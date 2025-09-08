@@ -91,7 +91,7 @@ class ProductService {
 
     const skip = (page - 1) * limit;
 
-    const lookups = []
+    const lookups = [];
     const projection = {
       _id: 1,
       name: 1,
@@ -100,6 +100,10 @@ class ProductService {
       category: 1,
       images: 1,
     };
+    console.log(
+      "src :: services :: product.service.js :: getProductsGeneric :: queryFilter: ",
+      queryFilter
+    );
 
     const pipeline = [
       { $match: queryFilter },

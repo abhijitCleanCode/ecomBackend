@@ -59,10 +59,10 @@ class CoupanService {
     filter = {},
     sort = { createdAt: -1 },
     userLoginCount = 1,
+    isAdmin = false,
   }) {
-    // input normalization
     const DEFAULT_LIMIT = 20;
-    const MAX_LIMIT = 200; // protect from huge queries
+    const MAX_LIMIT = 200;
 
     page = Number.isNaN(Number(page)) ? 1 : Math.max(1, parseInt(page, 10));
     limit = Number.isNaN(Number(limit))
@@ -70,7 +70,6 @@ class CoupanService {
       : Math.min(MAX_LIMIT, Math.max(1, parseInt(limit, 10)));
 
     const queryFilter = { ...filter };
-
     const skip = (page - 1) * limit;
 
     const lookups = [];
@@ -81,39 +80,40 @@ class CoupanService {
       minLoginCount: 1,
       minOrderValue: 1,
       validFrom: 1,
+      validTill: 1,
       usageLimit: 1,
       discount: 1,
+      isActive: 1,
       createdAt: 1,
       updatedAt: 1,
     };
+
+    // base conditions
+    const baseConditions = {
+      ...queryFilter,
+      isActive: true,
+    };
+
+    // if not admin, apply eligibility filters
+    if (!isAdmin) {
+      // baseConditions.validFrom = { $lte: new Date() };
+      // baseConditions.$or = [
+      //   { validTill: null },
+      //   { validTill: { $gte: new Date() } },
+      // ];
+      baseConditions.minLoginCount = { $lte: userLoginCount };
+    }
+
     const pipeline = [
-      {
-        $match: {
-          ...queryFilter,
-          isActive: true, // only active coupons
-          validFrom: { $lte: new Date() }, // valid now
-          $or: [{ validTill: null }, { validTill: { $gte: new Date() } }],
-          minLoginCount: { $lte: userLoginCount }, // eligibility check
-        },
-      },
+      { $match: baseConditions },
       ...buildLookUpPipeline(lookups, projection),
       { $sort: sort },
       { $skip: skip },
       { $limit: limit },
     ];
-    const coupanAggregate = await Coupan.aggregate(pipeline);
-    const total = await Coupan.countDocuments({
-      ...queryFilter,
-      isActive: true,
-      validFrom: { $lte: new Date() },
-      $or: [{ validTill: null }, { validTill: { $gte: new Date() } }],
-      minLoginCount: { $lte: userLoginCount },
-    });
 
-    console.log(
-      "src :: services :: coupan.service.js :: getCoupanGeneric :: coupanAggregate: ",
-      coupanAggregate
-    );
+    const coupanAggregate = await Coupan.aggregate(pipeline);
+    const total = await Coupan.countDocuments(baseConditions);
 
     if (!coupanAggregate || coupanAggregate.length === 0) {
       return {

@@ -13,7 +13,7 @@ export const CREATE_ORDER = async (req, res) => {
   } = req.body;
   const orderData = {
     //todo replace it with req.user._id
-    user: "68b7c66e680f1511305b63a4",
+    user: req.user._id,
     orderItems,
     orderQuantity,
     appliedCoupans,
@@ -23,7 +23,8 @@ export const CREATE_ORDER = async (req, res) => {
   };
 
   try {
-    const order = await OrderService.createOrder(orderData);
+    const userLoginCount = req.user?.loginCount || 1;
+    const order = await OrderService.createOrder(orderData, userLoginCount);
 
     return res
       .status(201)
@@ -41,6 +42,13 @@ export const GET_ORDERS_GENERIC = async (req, res) => {
   const filter = builOrderFilter(filterParams);
 
   try {
+    // const isAdmin = req.user.role === "admin";
+    // console.log("isAdmin: ", isAdmin);
+    // if (!isAdmin) {
+    //   filter.user =  req.user._id.
+    //   console.log("filter: ", filter);
+    // };
+
     const orders = await OrderService.getOrdersGeneric({
       page,
       limit,

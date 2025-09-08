@@ -24,3 +24,20 @@ export const REGISTER_USER = async (req, res) => {
     });
   }
 };
+
+export const LOGIN_USER = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await UserServices.loginUser(email, password);
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, user, "User logged in successfully"));
+  } catch (error) {
+    res.status(error.code || 500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

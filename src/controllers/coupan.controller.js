@@ -32,6 +32,12 @@ export const GET_COUPANS_GENERIC = async (req, res) => {
   try {
     // pass user’s loginCount to service
     const userLoginCount = req.user?.loginCount || 1;
+    const userRole = req.user.role;
+
+    let isAdmin = false;
+    if (userRole === "admin") {
+      isAdmin = true;
+    }
 
     const coupan = await CoupanService.getCoupanGeneric({
       page,
@@ -39,6 +45,7 @@ export const GET_COUPANS_GENERIC = async (req, res) => {
       filter,
       sort,
       userLoginCount,
+      isAdmin
     });
 
     return res

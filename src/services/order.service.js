@@ -6,7 +6,7 @@ import Coupan from "../models/coupan.model.js";
 import { buildLookUpPipeline } from "../utils/dynamicLookupHelper.js";
 
 class OrderService {
-  static async createOrder(orderDetails) {
+  static async createOrder(orderDetails, userLoginCount) {
     console.log("src :: services :: order.service.js :: createOrder :: orderDetails: ", orderDetails);
 
     //todo basic validation
@@ -42,7 +42,7 @@ class OrderService {
           if (coupan.validFrom > Date.now()) {
             throw new ApiError(400, "Coupan is not valid yet");
           }
-          if (coupan.minLoginCount > user.loginCount) {
+          if (coupan.minLoginCount > userLoginCount) {
             throw new ApiError(400, "Coupan is not applicable for this user");
           }
           discountPrice = total * (coupan.discount / 100);
@@ -87,7 +87,7 @@ class OrderService {
     filter = {},
     sort = { createdAt: -1 },
   }) {
-    // input normalization
+    // fallback parameter
     const DEFAULT_LIMIT = 20;
     const MAX_LIMIT = 200; // protect from huge queries
 
@@ -105,7 +105,7 @@ class OrderService {
         from: "products",
         localField: "orderItems",
         foreignField: "_id",
-        as: "orderItems",
+        as: "orderItem",
       },
       {
         from: "users",
@@ -116,11 +116,12 @@ class OrderService {
     ];
     const projection = {
       _id: 1,
-      product: "$orderItems.name",
-      productCategory: "$orderItems.category",
-      productListingPrice: "$orderItems.price",
+      product: "$orderItem.name",
+      productCategory: "$orderItem.category",
+      productListingPrice: "$orderItem.price",
       customerName: "$user.name",
       customerAddress: "$user.address",
+      orderItems: 1,
       orderQuantity: 1,
       total: 1,
       discount: 1,
@@ -137,8 +138,10 @@ class OrderService {
       { $limit: limit },
     ]
 
+    console.log("src :: services :: order.service.js :: getOrdersGeneric :: pipeline: ", pipeline);
     const ordersAggregate = await Order.aggregate(pipeline);
     const total = await Order.countDocuments(queryFilter);
+    console.log("src :: services :: order.service.js :: getOrdersGeneric :: total: ", total);
 
     console.log("src :: services :: order.service.js :: getOrdersGeneric :: ordersAggregate: ", ordersAggregate);
 

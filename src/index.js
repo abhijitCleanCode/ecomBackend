@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { app } from "./app.js";
 import connectDB from "./db/connection.js";
 import mongoose from "mongoose";
+import { initAdminData } from "./db/initAdmin.js";
 
 dotenv.config({
   path: "./.env",
@@ -22,6 +23,7 @@ async function startServer() {
 
     // 2. initialize admin data
     const db = mongoose.connection.db;
+    await initAdminData(db);
 
     app.listen(PORT, "0.0.0.0", () => {
         console.log(
