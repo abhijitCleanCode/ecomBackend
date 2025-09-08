@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: express-backend
+    env: node
+    plan: free   # change to 'starter' or higher if needed
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: ACCESS_TOKEN_SECRET
+        sync: false
+      - key: ACCESS_TOKEN_EXPIRY
+        sync: false
+      - key: REFRESH_TOKEN_SECRET
+        sync: false
+      - key: REFRESH_TOKEN_EXPIRY
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
